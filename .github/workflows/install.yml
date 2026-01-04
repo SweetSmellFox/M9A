@@ -136,15 +136,16 @@ jobs:
 
       - name: Modify MFAAvalonia exe icon
         if: matrix.arch == 'x86_64'
-        shell: bash
+        shell: pwsh
         run: |
-          # 下载 rcedit
-          curl -L https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe -o rcedit.exe
+          $url = "https://www.angusj.com/resourcehacker/resource_hacker.zip"
+          Invoke-WebRequest -Uri $url -OutFile resource_hacker.zip
+          Expand-Archive -Path resource_hacker.zip -DestinationPath resource_hacker -Force
 
-          # 修改 exe 图标
-          ./rcedit.exe "MFA/MFAAvalonia.exe" --set-icon "m9a.ico"
-
-          echo "MFAAvalonia icon modified successfully"
+          $reshack = "resource_hacker/ResourceHacker.exe"
+          $ico = "m9a.ico"
+          & $reshack -open "MFA/MFAAvalonia.exe" -save "MFA/MFAAvalonia.exe" -action addoverwrite -res $ico -mask ICONGROUP,MAINICON,1033
+          Write-Host "MFAAvalonia icon modified successfully"
 
       - name: Setup Embed Python on Windows
         shell: bash
