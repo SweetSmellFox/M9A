@@ -345,7 +345,7 @@ jobs:
               ;;
             *.ico)
               python3 -m pip install --disable-pip-version-check --quiet pillow
-              launcher_icon="$RUNNER_TEMP/m9a-android-icon.png"
+              launcher_icon="$RUNNER_TEMP/m9a_android_icon.png"
               python3 - "$launcher_icon_source" "$launcher_icon" <<'PY'
           from pathlib import Path
           import sys
