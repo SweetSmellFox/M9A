@@ -62,6 +62,7 @@ jobs:
         id: python_requirements
         shell: bash
         run: |
+          python3 -m pip install --disable-pip-version-check "packaging==25.0"
           python3 - <<'PY'
           from pathlib import Path
           import re
