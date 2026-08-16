@@ -106,15 +106,16 @@ jobs:
           maafw_ref = f"v{maafw_version}"
 
           # Resolve the Python distribution dependency closure at build time.
-          # Desktop-only MaaFw packages are intentionally excluded: Android uses
-          # the APK's native MaaFramework runtime and the checked-out pure-Python
-          # binding instead of maaagentbinary's desktop executables.
+          # MaaFw distributions are intentionally excluded from the p4a pip
+          # payload: Android uses the APK's native runtime and the checked-out
+          # pure-Python binding. The maafw dependency metadata is still traversed.
           import json
           import urllib.request
           from packaging.requirements import InvalidRequirement, Requirement
           from packaging.utils import canonicalize_name
 
-          excluded_distributions = {"maaagentbinary"}
+          excluded_distributions = {"maaagentbinary", "maafw"}
+          non_recursive_distributions = {"maaagentbinary"}
           resolved = []
           seen = set()
 
@@ -128,15 +129,31 @@ jobs:
               extras = f"[{','.join(sorted(parsed.extras))}]" if parsed.extras else ""
               return f"{parsed.name}{extras}{parsed.specifier}"
 
+          # Resolve direct requirements first so their locked versions take
+          # precedence over looser transitive constraints such as
+          # urllib3<3,>=1.26 and an unpinned numpy dependency.
+          preferred_requirements = {}
+          for requirement in requirements:
+              parsed = parse_requirement(requirement)
+              if parsed.marker and not parsed.marker.evaluate():
+                  continue
+              name = canonicalize_name(parsed.name)
+              if name not in {"python3", "python"}:
+                  preferred_requirements[name] = parsed
+
           def add_requirement(requirement: str) -> None:
               parsed = parse_requirement(requirement)
               if parsed.marker and not parsed.marker.evaluate():
                   return
               name = canonicalize_name(parsed.name)
-              if not name or name in {"python3", "python"} or name in excluded_distributions or name in seen:
+              if not name or name in {"python3", "python"} or name in seen:
                   return
+              parsed = preferred_requirements.get(name, parsed)
               seen.add(name)
-              resolved.append(normalized_requirement(parsed))
+              if name not in excluded_distributions:
+                  resolved.append(normalized_requirement(parsed))
+              if name in non_recursive_distributions:
+                  return
               pinned = next(
                   (specifier.version for specifier in parsed.specifier if specifier.operator == "==" and "*" not in specifier.version),
                   None,
