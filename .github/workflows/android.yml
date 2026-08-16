@@ -493,6 +493,7 @@ jobs:
             --name MFAAndroidPythonAgent \
             --version 1.0 \
             --bootstrap service_library \
+            --dist-name "mfa_agent_${{ matrix.arch }}" \
             --requirements "$P4A_REQUIREMENTS" \
             --service mfaagent:mfa_android_agent.py \
             --arch "${{ matrix.abi }}" \
