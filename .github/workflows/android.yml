@@ -116,6 +116,10 @@ jobs:
 
           excluded_distributions = {"maaagentbinary", "maafw"}
           non_recursive_distributions = {"maaagentbinary"}
+          p4a_recipe_names = {
+              "numpy": "numpy",
+              "pillow": "Pillow",
+          }
           resolved = []
           seen = set()
 
@@ -126,6 +130,11 @@ jobs:
                   raise SystemExit(f"Invalid Python requirement {requirement!r}: {exc}")
 
           def normalized_requirement(parsed: Requirement) -> str:
+              recipe_name = p4a_recipe_names.get(canonicalize_name(parsed.name))
+              if recipe_name:
+                  # Native recipes carry p4a-tested versions and patches. A
+                  # PyPI pin would incorrectly become a git tag override.
+                  return recipe_name
               extras = f"[{','.join(sorted(parsed.extras))}]" if parsed.extras else ""
               return f"{parsed.name}{extras}{parsed.specifier}"
 
